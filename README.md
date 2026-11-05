@@ -1,5 +1,13 @@
 # Teacher Administration System
 
+**A Java-Based Application for Managing Teacher Records**
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-24-orange?style=for-the-badge&logo=openjdk" />
+  <img src="https://img.shields.io/badge/Architecture-Layered-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Status-In%20Development-yellow?style=for-the-badge" />
+</p>
+
 ## Overview
 
 Teacher Administration System is a console-based application developed using Java to manage teacher records efficiently.
