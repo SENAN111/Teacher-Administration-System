@@ -306,6 +306,13 @@ public class TeacherService {
 
 
         }
+        boolean updated = teacherRepository.updateTeacher(teacher);
+
+        if (updated) {
+            System.out.println("Teacher updated successfully in database!");
+        } else {
+            System.out.println("Teacher update failed!");
+        }
     }
 
     public void showTeachers() {

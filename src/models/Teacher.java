@@ -1,8 +1,8 @@
 package models;
 
 public class Teacher {
-    private  static Long count = 0L;
-    private final Long id;
+
+    private Long id;
     private String name;
     private String surName;
     private String fin;
@@ -20,15 +20,22 @@ public class Teacher {
         setEmail(email);
         setNumber(number);
         setSalary(salary);
-        this.id=++count;
+
 
     }
+    public Teacher(Long id, String name, String surName,
+                   String fin, int age, String email,
+                   String number, double salary) {
 
-    public static long getCount() {
-        return count;
+        this(name, surName, fin, age, email, number, salary);
+        this.id = id;
     }
 
 
+
+    public void setId(Long id) {
+        this.id = id;
+    }
     public Long getId() {
         return id;
     }

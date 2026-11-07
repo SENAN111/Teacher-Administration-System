@@ -1,119 +1,396 @@
 package repository;
 
+import database.DatabaseConnection;
 import models.Teacher;
-import utill.AppScanner;
 
+import java.sql.*;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class TeacherRepository {
-    private List<Teacher> teachers = new ArrayList<>();
 
+    // Bütün müəllimləri bazadan gətirir
     public List<Teacher> getTeachers() {
-        return new ArrayList<>(teachers);
+        List<Teacher> teachers = new ArrayList<>();
+
+        String sql = "SELECT * FROM teachers";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                teachers.add(mapTeacher(rs));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return teachers;
     }
 
+    // Yeni müəllim əlavə edir
     public void addTeacher(Teacher teacher) {
-        teachers.add(teacher);
-        System.out.println("The teacher was successfully added");
+
+        String sql = """
+                INSERT INTO teachers
+                (name, sur_name, fin, age, email, number, salary)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                RETURNING id
+                """;
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, teacher.getName());
+            ps.setString(2, teacher.getSurName());
+            ps.setString(3, teacher.getFin());
+            ps.setInt(4, teacher.getAge());
+            ps.setString(5, teacher.getEmail());
+            ps.setString(6, teacher.getNumber());
+            ps.setDouble(7, teacher.getSalary());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    teacher.setId(rs.getLong("id"));
+                }
+            }
+
+            System.out.println("The teacher was successfully added");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-
+    // ID-yə görə müəllim tapır
     public Teacher getTeacherById(Long id) {
-        for (Teacher teacher : teachers) {
-            if (teacher.getId().equals(id)) {
-                return teacher;
+
+        String sql = "SELECT * FROM teachers WHERE id = ?";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapTeacher(rs);
+                }
             }
 
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return null;
-
     }
 
+    // Müəllimi silir
     public void deleteTeacher(Long id) {
-        boolean removed = teachers.removeIf(teacher -> teacher.getId().equals(id));
-        if (!removed) {
-            System.out.println("Teacher not found");
+
+        String sql = "DELETE FROM teachers WHERE id = ?";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+
+            int rows = ps.executeUpdate();
+
+            if (rows == 0) {
+                System.out.println("Teacher not found");
+            } else {
+                System.out.println("Teacher deleted successfully");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-
+    // Email-in mövcudluğunu yoxlayır
     public boolean existsByEmail(String email) {
-        for (Teacher teacher : teachers) {
-            if (teacher.getEmail().equalsIgnoreCase(email)) {
-                System.out.println("Email already exists! Try another one.");
-                return true;
+
+        String sql = "SELECT EXISTS (SELECT 1 FROM teachers WHERE LOWER(email) = LOWER(?))";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    boolean exists = rs.getBoolean(1);
+
+                    if (exists) {
+                        System.out.println("Email already exists! Try another one.");
+                    }
+
+                    return exists;
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return false;
     }
 
+    // FIN-in mövcudluğunu yoxlayır
     public boolean existsByFin(String fin) {
-        for (Teacher teacher : teachers) {
-            if (teacher.getFin().equalsIgnoreCase(fin)) {
-                System.out.println("FIN already exists! Try another one.");
-                return true;
+
+        String sql = "SELECT EXISTS (SELECT 1 FROM teachers WHERE LOWER(fin) = LOWER(?))";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, fin);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    boolean exists = rs.getBoolean(1);
+
+                    if (exists) {
+                        System.out.println("FIN already exists! Try another one.");
+                    }
+
+                    return exists;
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return false;
     }
 
+    // FIN başqa ID-li müəllimdə varmı?
     public boolean existsByFinAndIdNot(String fin, Long id) {
-        for (Teacher teacher : teachers) {
-            if (teacher.getFin().equalsIgnoreCase(fin) && !teacher.getId().equals(id)) {
-                return true;
 
+        String sql = """
+                SELECT EXISTS (
+                    SELECT 1 FROM teachers
+                    WHERE LOWER(fin) = LOWER(?) AND id <> ?
+                )
+                """;
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, fin);
+            ps.setLong(2, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean(1);
+                }
             }
-        }
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         return false;
     }
 
+    // Email başqa ID-li müəllimdə varmı?
     public boolean existsByEmailAndIdNot(String email, Long id) {
-        for (Teacher teacher : teachers) {
-            if (teacher.getEmail().equalsIgnoreCase(email) && !teacher.getId().equals(id)) {
-                return true;
+
+        String sql = """
+                SELECT EXISTS (
+                    SELECT 1 FROM teachers
+                    WHERE LOWER(email) = LOWER(?) AND id <> ?
+                )
+                """;
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+            ps.setLong(2, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean(1);
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
         return false;
     }
 
+    // FIN-ə görə müəllim axtarır
     public Teacher searchTeacherByFin(String fin) {
-        for (Teacher teacher : teachers) {
-            if (teacher.getFin().equalsIgnoreCase(fin)) {
-                return teacher;
+
+        String sql = "SELECT * FROM teachers WHERE LOWER(fin) = LOWER(?)";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, fin);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapTeacher(rs);
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
         return null;
     }
 
+    // Müəllimlərin sayını qaytarır
     public int countTeacher() {
 
-        return teachers.size();
+        String sql = "SELECT COUNT(*) FROM teachers";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
     }
 
-    public  List<Teacher> sortedTeachersByAge() {
-        List<Teacher> filtiretTeacherbyAge = teachers.stream().sorted(Comparator.comparing(Teacher::getAge)).collect(Collectors.toList());
-        return filtiretTeacherbyAge;
+    // Yaşa görə sıralayır
+    public List<Teacher> sortedTeachersByAge() {
+        return getTeachersSorted("age ASC");
     }
-    public  List<Teacher>  sortedTeachersBySalary(){
-        List<Teacher>sortedTeachersbySalary=teachers.stream().sorted(Comparator.comparing(Teacher::getSalary)).collect(Collectors.toList());
-        return sortedTeachersbySalary;
-    }
-    public double getAverageSalary()
-    {
-        return teachers.stream().mapToDouble(Teacher::getSalary).average().orElse(0.0);
-    }
-    public Teacher getHighestPaidTeacher()
-    {
 
-        return teachers.stream().max(Comparator.comparing(Teacher::getSalary)).orElse(null);
+    // Maaşa görə sıralayır
+    public List<Teacher> sortedTeachersBySalary() {
+        return getTeachersSorted("salary ASC");
+    }
+
+    private List<Teacher> getTeachersSorted(String order) {
+
+        List<Teacher> teachers = new ArrayList<>();
+
+        String sql = "SELECT * FROM teachers ORDER BY " + order;
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                teachers.add(mapTeacher(rs));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return teachers;
+    }
+
+    // Orta maaşı hesablayır
+    public double getAverageSalary() {
+
+        String sql = "SELECT AVG(salary) FROM teachers";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getDouble(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0.0;
+    }
+
+    // Ən yüksək maaş alan müəllimi tapır
+    public Teacher getHighestPaidTeacher() {
+
+        String sql = """
+                SELECT * FROM teachers
+                ORDER BY salary DESC NULLS LAST
+                LIMIT 1
+                """;
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return mapTeacher(rs);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    // Database məlumatlarını Teacher obyektinə çevirir
+    private Teacher mapTeacher(ResultSet rs) throws SQLException {
+
+        return new Teacher(
+                rs.getLong("id"),
+                rs.getString("name"),
+                rs.getString("sur_name"),
+                rs.getString("fin"),
+                rs.getInt("age"),
+                rs.getString("email"),
+                rs.getString("number"),
+                rs.getDouble("salary")
+        );
+    }
+    public boolean updateTeacher(Teacher teacher) {
+
+        String sql = """
+            UPDATE teachers
+            SET name = ?,
+                sur_name = ?,
+                fin = ?,
+                age = ?,
+                email = ?,
+                number = ?,
+                salary = ?
+            WHERE id = ?
+            """;
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, teacher.getName());
+            ps.setString(2, teacher.getSurName());
+            ps.setString(3, teacher.getFin());
+            ps.setInt(4, teacher.getAge());
+            ps.setString(5, teacher.getEmail());
+            ps.setString(6, teacher.getNumber());
+            ps.setDouble(7, teacher.getSalary());
+            ps.setLong(8, teacher.getId());
+
+            int rows = ps.executeUpdate();
+
+            return rows > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
