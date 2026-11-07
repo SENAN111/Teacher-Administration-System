@@ -1,154 +1,157 @@
 # Teacher Administration System
 
-**A Java-Based Application for Managing Teacher Records**
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Java-24-orange?style=for-the-badge&logo=openjdk" />
-  <img src="https://img.shields.io/badge/Architecture-Layered-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Status-In%20Development-yellow?style=for-the-badge" />
-</p>
+A Java-based console application for managing teacher records using PostgreSQL and JDBC.
 
 ## Overview
 
-Teacher Administration System is a console-based application developed using Java to manage teacher records efficiently.
+Teacher Administration System is a console-based application developed with Java. It allows users to manage teacher information through a menu-driven interface.
 
-The project demonstrates practical implementation of Object-Oriented Programming (OOP) principles, layered architecture, data validation, and business logic separation.
+The application follows a layered architecture and uses PostgreSQL for persistent data storage.
 
-It provides functionality for registering, retrieving, searching, and updating teacher information while maintaining data consistency through validation and duplicate-checking mechanisms.
+## Features
 
-## Key Features
+- Add new teachers
+- Display all teachers
+- Update teacher information
+- Delete teachers
+- Search teachers by ID
+- Search teachers by FIN
+- Count registered teachers
+- Sort teachers by age
+- Sort teachers by salary
+- Calculate average salary
+- Find the highest-paid teacher
+- Validate user input
+- Prevent duplicate FIN codes and email addresses
 
-- **Teacher Registration:** Add new teacher records with validated information.
-- **Teacher Retrieval:** Access and display stored teacher information.
-- **Search by ID:** Find teachers using their unique identification number.
-- **Search by FIN:** Retrieve teacher records using their FIN code.
-- **Update Teacher Information:** Modify existing teacher details.
-- **Input Validation:** Validate user-provided data before processing.
-- **Duplicate Prevention:** Prevent duplicate FIN codes and email addresses.
-- **Centralized Input Management:** Handle console input through a shared Scanner utility.
+## Technologies
 
-## Technology Stack
-
-| Technology | Description |
+| Technology | Purpose |
 |---|---|
-| Java 24 | Core programming language |
-| OOP | Object-oriented programming principles |
-| ArrayList | In-memory data storage |
-| Java Collections Framework | Collection management |
-| Regular Expressions (Regex) | Input validation |
+| Java 24 | Application development |
+| PostgreSQL | Relational database |
+| JDBC | Database connectivity |
+| Docker | Running PostgreSQL |
 | IntelliJ IDEA | Development environment |
-| Git & GitHub | Version control and source code hosting |
+| Git & GitHub | Version control |
 
 ## Project Architecture
 
-The application is organized into separate packages following a layered architecture approach.
+The project uses a layered architecture to separate responsibilities.
 
 ```text
 src/
-│
+├── Main.java
+├── database/
+│   └── DatabaseConnection.java
 ├── models/
 │   └── Teacher.java
-│
 ├── repository/
 │   └── TeacherRepository.java
-│
 ├── service/
 │   └── TeacherService.java
-│
 └── utill/
     ├── AppScanner.java
     └── ValidationUtil.java
 ```
 
-### Architecture Components
+### Architecture Layers
 
-**Models Layer**
-- Defines the Teacher entity.
-- Encapsulates teacher attributes.
-- Manages object initialization and data access.
+- **Model:** Represents teacher data and its attributes.
+- **Repository:** Handles database operations using JDBC and SQL.
+- **Service:** Contains business logic and coordinates application operations.
+- **Database:** Manages the PostgreSQL connection.
+- **Utility:** Provides input handling and validation methods.
 
-**Repository Layer**
-- Manages teacher records using ArrayList.
-- Provides data retrieval and search operations.
-- Checks the existence of FIN codes and email addresses.
+## Database Structure
 
-**Service Layer**
-- Contains application business logic.
-- Coordinates operations between the repository and user input.
-- Handles teacher registration and update processes.
+The application uses a PostgreSQL table named `teachers`.
 
-**Utility Layer**
-- `ValidationUtil`: Provides reusable validation methods.
-- `AppScanner`: Centralizes console input management.
+| Column | Data Type | Description |
+|---|---|---|
+| id | BIGSERIAL | Primary key |
+| name | VARCHAR(100) | Teacher's first name |
+| sur_name | VARCHAR(100) | Teacher's surname |
+| fin | VARCHAR(7) | Unique FIN code |
+| age | INTEGER | Teacher's age |
+| email | VARCHAR(150) | Unique email address |
+| number | VARCHAR(20) | Phone number |
+| salary | NUMERIC(10,2) | Teacher's salary |
 
-## Data Validation
+## Setup and Installation
 
-The application implements validation rules to maintain data accuracy and consistency.
+### Requirements
 
-| Field | Validation |
-|---|---|
-| Name | 3–20 alphabetic characters |
-| Age | Between 18 and 70 |
-| FIN | Exactly 7 alphanumeric characters |
-| Email | Valid email format |
-| Phone Number | Azerbaijani mobile number format |
-| Salary | Must be greater than zero |
-
-### Data Integrity
-
-- FIN codes must be unique.
-- Email addresses must be unique.
-- User input is validated before processing.
-- Existing teacher records are checked during update operations.
-
-## Installation & Execution
-
-### Prerequisites
-
-- JDK 24 or compatible Java Development Kit
+- JDK 24 or compatible JDK
+- PostgreSQL
+- Docker
 - IntelliJ IDEA
-- Git
+- PostgreSQL JDBC Driver
 
-### Clone Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/SENAN111/Teacher-Administration-System.git
 ```
 
-### Run the Application
+### 2. Configure PostgreSQL
 
-1. Open the project in IntelliJ IDEA.
-2. Configure the JDK.
-3. Locate the main application class.
-4. Run the application.
+Create a PostgreSQL database named `teacher_db` and a table:
 
-## Technical Concepts Applied
+```sql
+CREATE TABLE teachers (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    sur_name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    number VARCHAR(20),
+    fin VARCHAR(7) UNIQUE,
+    age INTEGER,
+    salary NUMERIC(10,2)
+);
+```
 
-This project demonstrates practical knowledge of:
+### 3. Add PostgreSQL JDBC Driver
 
-- Object-Oriented Programming (OOP)
-- Encapsulation
-- Constructors and object initialization
-- Static members
-- Layered application architecture
-- Constructor-based Dependency Injection
-- Java Collections Framework
-- ArrayList and iteration
-- Regular Expressions
-- Method design and code reusability
+Add the PostgreSQL JDBC Driver to the project dependencies in IntelliJ IDEA.
+
+### 4. Configure Environment Variables
+
+Set the following environment variables in IntelliJ IDEA Run Configuration:
+
+```text
+DB_URL=jdbc:postgresql://localhost:5432/teacher_db
+DB_USER=your_database_username
+DB_PASSWORD=your_database_password
+```
+
+**Important:** Never commit database passwords or other sensitive credentials to GitHub.
+
+### 5. Run the Application
+
+Open the project in IntelliJ IDEA and run `Main.java`.
+
+## Learning Objectives
+
+This project demonstrates practical experience with:
+
+- Java Object-Oriented Programming (OOP)
+- Encapsulation and constructors
+- Layered architecture
 - Separation of concerns
-- Input validation and data integrity
+- JDBC and SQL operations
+- PostgreSQL database integration
+- CRUD operations
+- Data validation
+- Exception handling
+- Java Collections Framework
 
-## Future Enhancements
+## Future Improvements
 
-The following improvements are planned for future versions:
-
-- Delete teacher functionality
-- Database integration using JDBC and MySQL
-- Persistent data storage
-- Exception handling and custom exceptions
-- Unit testing with JUnit
-- REST API development using Spring Boot
+- Migrate the project to Maven
+- Add unit tests using JUnit
+- Develop REST APIs using Spring Boot
+- Implement authentication and authorization
 
 ## Author
 
@@ -156,10 +159,6 @@ The following improvements are planned for future versions:
 
 Aspiring Java Backend Developer
 
-**Technologies & Interests:** Java | Spring Boot | SQL | Backend Development
-
 GitHub: [SENAN111](https://github.com/SENAN111)
 
----
-
-*Developed as a practical Java project to strengthen programming skills and gain hands-on experience in backend development.*
+Project Repository: [Teacher Administration System](https://github.com/SENAN111/Teacher-Administration-System)</Writing
